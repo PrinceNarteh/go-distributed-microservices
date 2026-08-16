@@ -15,11 +15,36 @@ import (
 var _ UserRepository = (*userRepository)(nil)
 
 type UserRepository interface {
+	Insert(user *models.User) error
 	GetAll() ([]*models.User, error)
+	GetOne(id int) (*models.User, error)
+	GetByEmail(email string) (*models.User, error)
+	Update(userID int, updates map[string]any) error
+	Delete(userID int) error
+	ResetPassword(userID int, newPassword string) error
 }
 
 type userRepository struct {
 	DB *sql.DB
+}
+
+func (r *userRepository) Insert(user *models.User) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	now := time.Now()
+	user.CreatedAt = now
+	user.UpdatedAt = now
+
+	var userID int
+	stmt := `INSERT INTO users (first_name, last_name, email, password, is_active, created_at, updated_at)
+			values ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+	if err := r.DB.QueryRowContext(ctx, stmt, user.FirstName, user.LastName, user.Email, user.Password, user.IsActive, user.CreatedAt, user.UpdatedAt).Scan(userID); err != nil {
+		return err
+	}
+	user.ID = userID
+
+	return nil
 }
 
 func (r *userRepository) GetAll() ([]*models.User, error) {
@@ -114,25 +139,6 @@ func (r *userRepository) Delete(userID int) error {
 	_, err := r.DB.ExecContext(ctx, stmt, userID)
 
 	return err
-}
-
-func (r *userRepository) Insert(user *models.User) error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
-	defer cancel()
-
-	now := time.Now()
-	user.CreatedAt = now
-	user.UpdatedAt = now
-
-	var userID int
-	stmt := `INSERT INTO users (first_name, last_name, email, password, is_active, created_at, updated_at)
-			values ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
-	if err := r.DB.QueryRowContext(ctx, stmt, user.FirstName, user.LastName, user.Email, user.Password, user.IsActive, user.CreatedAt, user.UpdatedAt).Scan(userID); err != nil {
-		return err
-	}
-	user.ID = userID
-
-	return nil
 }
 
 func (r *userRepository) ResetPassword(userID int, newPassword string) error {

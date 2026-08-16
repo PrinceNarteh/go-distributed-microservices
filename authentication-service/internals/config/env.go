@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -22,6 +23,10 @@ func initConfig() *Config {
 		DB: dbConfig{
 			DNS: getEnv("DNS", ""),
 		},
+		JWT: jwtConfig{
+			Secret:    getEnv("JWT_SECRET", "top-secret-to-generate-token"),
+			ExpiresAt: getEnvAsDuration("JWT_SECRET", time.Hour),
+		},
 	}
 }
 
@@ -31,4 +36,18 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func getEnvAsDuration(key string, fallback time.Duration) time.Duration {
+	durationAsStr := getEnv(key, "")
+	if durationAsStr == "" {
+		return fallback
+	}
+
+	duration, err := time.ParseDuration(durationAsStr)
+	if err != nil {
+		return fallback
+	}
+
+	return duration
 }
