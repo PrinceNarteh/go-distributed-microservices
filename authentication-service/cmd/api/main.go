@@ -1,18 +1,36 @@
 package main
 
 import (
+	"authentication/internals/config"
+	"authentication/internals/db"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-const webPort = "8080"
-
-type Application struct{}
+type Application struct {
+	DB     *sql.DB
+	Models data.Models
+}
 
 func main() {
-	app := Application{}
+	log.Println("Starting Authentication Service")
 
+	// connect database
+	db := db.ConnectDB()
+	if db == nil {
+		log.Fatal("could not connect to Postgres")
+	}
+
+	// initializing app
+	app := Application{
+		DB: db,
+	}
+
+	webPort := config.Env.App.Port
 	log.Println("starting authentication-service on port:", webPort)
 
 	server := &http.Server{
