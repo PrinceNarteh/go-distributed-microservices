@@ -3,6 +3,8 @@ package main
 import (
 	"authentication/internals/config"
 	"authentication/internals/db"
+	"authentication/internals/repositories"
+	"authentication/internals/services"
 	"database/sql"
 	"fmt"
 	"log"
@@ -12,8 +14,8 @@ import (
 )
 
 type Application struct {
-	DB     *sql.DB
-	Models data.Models
+	DB  *sql.DB
+	svc *services.Services
 }
 
 func main() {
@@ -24,10 +26,13 @@ func main() {
 	if db == nil {
 		log.Fatal("could not connect to Postgres")
 	}
+	repo := repositories.NewRepository(db)
+	services := services.NewService(repo)
 
 	// initializing app
 	app := Application{
-		DB: db,
+		DB:  db,
+		svc: services,
 	}
 
 	webPort := config.Env.App.Port

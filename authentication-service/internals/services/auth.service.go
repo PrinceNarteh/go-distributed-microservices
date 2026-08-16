@@ -14,8 +14,8 @@ import (
 var _ AuthService = (*authService)(nil)
 
 type AuthService interface {
-	Login(data *models.LoginRequest) error
-	Register(data *models.RegisterRequest) error
+	Login(data *models.LoginRequest) (*models.AuthResponse, error)
+	Register(data *models.RegisterRequest) (*models.AuthResponse, error)
 }
 
 type authService struct {
