@@ -25,7 +25,7 @@ func initConfig() *Config {
 		},
 		JWT: jwtConfig{
 			Secret:    getEnv("JWT_SECRET", "top-secret-to-generate-token"),
-			ExpiresAt: getEnvAsDuration("JWT_SECRET", time.Hour),
+			ExpiresAt: getEnvAsDuration("JWT_EXPIRES_AT", time.Hour),
 		},
 	}
 }
