@@ -2,10 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"time"
 )
-
-const dbTimeout = 3 * time.Second
 
 var db *sql.DB
 
