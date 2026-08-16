@@ -19,4 +19,5 @@ func ConnectDB() *sql.DB {
 
 	log.Println("waiting for Postgres")
 	time.Sleep(2 * time.Second)
+	return nil
 }
