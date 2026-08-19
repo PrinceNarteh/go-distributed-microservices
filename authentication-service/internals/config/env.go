@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -12,9 +11,7 @@ import (
 var Env = initConfig()
 
 func initConfig() *Config {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("failed to load .env file")
-	}
+	_ = godotenv.Load()
 
 	return &Config{
 		App: appConfig{

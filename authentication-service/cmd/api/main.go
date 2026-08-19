@@ -1,14 +1,14 @@
 package main
 
 import (
-	"authentication/internals/config"
-	"authentication/internals/db"
-	"authentication/internals/repositories"
 	"authentication/internals/services"
+	"context"
 	"database/sql"
-	"fmt"
 	"log"
-	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -21,29 +21,35 @@ type Application struct {
 func main() {
 	log.Println("Starting Authentication Service")
 
-	// connect database
-	db := db.ConnectDB()
-	if db == nil {
-		log.Fatal("could not connect to Postgres")
-	}
-	repo := repositories.NewRepository(db)
-	services := services.NewService(repo)
+	// initializing server
+	server := initServer()
 
-	// initializing app
-	app := Application{
-		DB:  db,
-		svc: services,
+	// channel to check for server error
+	serverError := make(chan error, 1)
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			serverError <- err
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case err := <-serverError:
+		log.Printf("server error: %v", err)
+	case err := <-quit:
+		log.Printf("Received shutdown signal: %v", err)
 	}
 
-	webPort := config.Env.App.Port
-	log.Println("starting authentication-service on port:", webPort)
+	log.Println("Server is shutting down...")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	server := &http.Server{
-		Addr:    fmt.Sprintf(":%s", webPort),
-		Handler: app.routes(),
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("Server shutdown error: %v", err)
+		return
 	}
 
-	if err := server.ListenAndServe(); err != nil {
-		log.Fatalln(err)
-	}
+	log.Println("Server exited properly")
 }

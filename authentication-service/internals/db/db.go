@@ -8,7 +8,7 @@ import (
 )
 
 func ConnectDB() *sql.DB {
-	dsn := config.Env.App.Port
+	dsn := config.Env.DB.DNS
 	for range 10 {
 		db, err := sql.Open("pgx", dsn)
 		if err == nil && db.Ping() == nil {
